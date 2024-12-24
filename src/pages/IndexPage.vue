@@ -1,43 +1,44 @@
 <template>
-  <q-page class="row items-center justify-evenly">
-    <example-component
-      title="Example component"
-      active
-      :todos="todos"
-      :meta="meta"
-    ></example-component>
+  <q-page class="q-pa-md">
+    <q-file
+      color="teal"
+      filled
+      v-model="fileModel"
+      label="選擇圖片"
+      @update:model-value="breedModel = null"
+    >
+      <template v-slot:prepend>
+        <q-icon name="cloud_upload" />
+      </template>
+    </q-file>
+
+    <q-img v-if="fileModel" :src="imgURL(fileModel)" class="fit q-mt-md" />
+
+    <q-btn class="fit q-mt-md" outline rounded label="辨識" @click="fetchBreed" />
+
+    <div class="q-mt-md">辨識結果：{{ breedModel }}</div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { Todo, Meta } from 'components/models';
-import ExampleComponent from 'components/ExampleComponent.vue';
+import { api } from 'src/boot/axios'
+import { ref } from 'vue'
 
-const todos = ref<Todo[]>([
-  {
-    id: 1,
-    content: 'ct1'
-  },
-  {
-    id: 2,
-    content: 'ct2'
-  },
-  {
-    id: 3,
-    content: 'ct3'
-  },
-  {
-    id: 4,
-    content: 'ct4'
-  },
-  {
-    id: 5,
-    content: 'ct5'
-  }
-]);
+const fileModel = ref<File | null>(null)
+const breedModel = ref<string | null>(null)
 
-const meta = ref<Meta>({
-  totalCount: 1200
-});
+const imgURL = (file: File) => URL.createObjectURL(file)
+
+const fetchBreed = async () => {
+  const formData = new FormData()
+  formData.append('file', fileModel.value as File)
+
+  const response = await api.post('/upload-image/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+
+  breedModel.value = response.data.class
+}
 </script>
